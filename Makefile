@@ -75,6 +75,9 @@ USE_SSL?=0
 ifeq ($(USE_SSL),1)
   CFLAGS+=-DHIREDIS_TEST_SSL
 endif
+ifeq ($(TEST_ASYNC),1)
+  export CFLAGS+=-DHIREDIS_TEST_ASYNC
+endif
 
 ifeq ($(uname_S),Linux)
   SSL_LDFLAGS=-lssl -lcrypto
@@ -205,6 +208,9 @@ TEST_LIBS = $(STLIBNAME)
 ifeq ($(USE_SSL),1)
     TEST_LIBS += $(SSL_STLIBNAME)
     TEST_LDFLAGS = $(SSL_LDFLAGS) -lssl -lcrypto -lpthread
+endif
+ifeq ($(TEST_ASYNC),1)
+    TEST_LDFLAGS += -levent
 endif
 
 hiredis-test: test.o $(TEST_LIBS)
