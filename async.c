@@ -497,8 +497,8 @@ static int redisIsSubscribeReply(redisReply *reply) {
     len = reply->element[0]->len - off;
 
     return !strncasecmp(str, "subscribe", len) ||
-           !strncasecmp(str, "message", len);
-
+           !strncasecmp(str, "message", len) ||
+           !strncasecmp(str, "unsubscribe", len);
 }
 
 void redisProcessCallbacks(redisAsyncContext *ac) {
