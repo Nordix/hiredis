@@ -1479,15 +1479,15 @@ void publish_cb(int fd, short event, void *arg) {
     disconnect(c, 0);
 }
 
-/* Subscribe callback for test_pubsub_handling:
+/* Subscribe callback for test_pubsub_handling and test_pubsub_handling_resp3:
    - a published message triggers an unsubscribe
    - an unsubscribe response triggers a disconnect. */
 void subscribe_cb(redisAsyncContext *ac, void *r, void *privdata) {
-    (void) privdata;
     redisReply *reply = r;
+    int *reply_type = privdata;
 
     assert(reply != NULL &&
-           reply->type == REDIS_REPLY_ARRAY &&
+           reply->type == *reply_type &&
            reply->elements == 3);
 
     if (strcmp(reply->element[0]->str,"subscribe") == 0) {
@@ -1531,9 +1531,53 @@ static void test_pubsub_handling(struct config config) {
     redisLibeventAttach(ac,base);
 
     /* Start subscribe */
-    redisAsyncCommand(ac,subscribe_cb,NULL,"subscribe channel");
+    int reply_type = REDIS_REPLY_ARRAY;
+    redisAsyncCommand(ac,subscribe_cb,&reply_type,"subscribe channel");
 
     /* Publish a message via another client. */
+    struct event publish;
+    evtimer_assign(&publish,base,publish_cb,(void*)&options);
+    struct timeval publish_tv = {.tv_usec = 100000};
+    evtimer_add(&publish,&publish_tv);
+
+    /* Start event dispatching loop */
+    test_cond(event_base_dispatch(base) == 0);
+    event_base_free(base);
+}
+
+/* Unexpected push message, will trigger a failure */
+void unexpected_push_cb(redisAsyncContext *ac, void *r) {
+    (void) ac; (void) r;
+    printf("Unexpected call to the PUSH callback!\n");
+    exit(1);
+}
+
+static void test_pubsub_handling_resp3(struct config config) {
+    test("Subscribe, handle published message and unsubscribe using RESP3: ");
+    /* Setup event dispatcher with a testcase timeout */
+    base = event_base_new();
+    struct event timeout;
+    evtimer_assign(&timeout,base,timeout_cb,NULL);
+    struct timeval timeout_tv = {.tv_sec = 10};
+    evtimer_add(&timeout, &timeout_tv);
+
+    /* Connect */
+    redisOptions options = get_redis_tcp_options(config);
+    redisAsyncContext *ac = redisAsyncConnectWithOptions(&options);
+    assert(ac != NULL && ac->err == 0);
+    redisLibeventAttach(ac,base);
+
+    /* Not expecting any push messages in this test */
+    redisAsyncSetPushCallback(ac, unexpected_push_cb);
+
+    /* Switch protocol */
+    redisAsyncCommand(ac,NULL,NULL,"HELLO 3");
+
+    /* Start subscribe */
+    int reply_type = REDIS_REPLY_PUSH;
+    redisAsyncCommand(ac,subscribe_cb,&reply_type,"subscribe channel");
+
+    /* Publish a message via another client */
     struct event publish;
     evtimer_assign(&publish,base,publish_cb,(void*)&options);
     struct timeval publish_tv = {.tv_usec = 100000};
@@ -1665,7 +1709,14 @@ int main(int argc, char **argv) {
 
 #ifdef HIREDIS_TEST_ASYNC
     printf("\nTesting asynchronous API against TCP connection (%s:%d):\n", cfg.tcp.host, cfg.tcp.port);
+    cfg.type = CONN_TCP;
+    redisContext *c = do_connect(cfg);
+    int major;
+    get_redis_version(c, &major, NULL);
+    disconnect(c, 0);
+
     test_pubsub_handling(cfg);
+    if (major >= 6) test_pubsub_handling_resp3(cfg);
 #endif
 
     if (test_inherit_fd) {
