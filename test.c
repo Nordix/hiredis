@@ -1552,6 +1552,22 @@ void unexpected_push_cb(redisAsyncContext *ac, void *r) {
     exit(1);
 }
 
+void array_cb(redisAsyncContext *ac, void *r, void *privdata) {
+    (void) ac;
+    redisReply *reply = r;
+    TestState *state = privdata;
+    assert(reply != NULL && reply->type == REDIS_REPLY_ARRAY);
+    state->checkpoint++;
+}
+
+void nil_cb(redisAsyncContext *ac, void *r, void *privdata) {
+    (void) ac;
+    redisReply *reply = r;
+    TestState *state = privdata;
+    assert(reply != NULL && reply->type == REDIS_REPLY_NIL);
+    state->checkpoint++;
+}
+
 static void test_pubsub_handling_resp3(struct config config) {
     test("Subscribe, handle published message and unsubscribe using RESP3: ");
     /* Setup event dispatcher with a testcase timeout */
@@ -1577,12 +1593,16 @@ static void test_pubsub_handling_resp3(struct config config) {
     TestState state = {.options = &options, .resp3 = 1};
     redisAsyncCommand(ac,subscribe_cb,&state,"subscribe mychannel");
 
+    /* Make sure non-subscribe commands works in RESP3 */
+    redisAsyncCommand(ac,array_cb,&state,"TIME");
+    redisAsyncCommand(ac,nil_cb,&state,"GET nonexisting");
+
     /* Start event dispatching loop */
     test_cond(event_base_dispatch(base) == 0);
     event_base_free(base);
 
     /* Verify test checkpoints */
-    assert(state.checkpoint == 1);
+    assert(state.checkpoint == 3);
 }
 #endif
 

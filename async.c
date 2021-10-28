@@ -421,7 +421,8 @@ static int __redisGetSubscribeCallback(redisAsyncContext *ac, redisReply *reply,
 
     /* Custom reply functions are not supported for pub/sub. This will fail
      * very hard when they are used... */
-    if (reply->type == REDIS_REPLY_ARRAY || reply->type == REDIS_REPLY_PUSH) {
+    if ((reply->type == REDIS_REPLY_ARRAY && !(c->flags & REDIS_SUPPORTS_PUSH)) ||
+        reply->type == REDIS_REPLY_PUSH) {
         assert(reply->elements >= 2);
         assert(reply->element[0]->type == REDIS_REPLY_STRING);
         stype = reply->element[0]->str;
@@ -525,6 +526,9 @@ void redisProcessCallbacks(redisAsyncContext *ac) {
              * trying to get replies and wait for the next loop tick. */
             break;
         }
+
+        /* Keep track of push message support for subscribe handling */
+        if (redisIsPushReply(reply)) c->flags |= REDIS_SUPPORTS_PUSH;
 
         /* Send any non-subscribe related PUSH messages to our PUSH handler
          * while allowing subscribe related PUSH messages to pass through.
