@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   ubuntu:
-    if: ${{ false }}  # disable for now
+#    if: ${{ false }}  # disable for now
     name: Ubuntu
     runs-on: ubuntu-latest
     steps:
@@ -25,10 +25,15 @@ jobs:
           EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON
           CFLAGS: -Werror
           CXXFLAGS: -Werror
-        run: mkdir build-ubuntu && cd build-ubuntu && cmake ..
+        run: mkdir build-ubuntu && cd build-ubuntu && cmake .. && make
 
       - name: Build using makefile
         run: USE_SSL=1 TEST_ASYNC=1 make
+
+      - name: Run c++ test
+        run: |
+          ls $GITHUB_WORKSPACE/build-ubuntu/
+          $GITHUB_WORKSPACE/build-ubuntu/hiredis-test-cpp
 
       - name: Run tests
         env:
@@ -186,6 +191,7 @@ jobs:
       - name: Build hiredis
         env:
           CC: clang-cl
+          CXX: clang-cl
         run: |
           mkdir build && cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_EXAMPLES=ON
@@ -194,6 +200,10 @@ jobs:
       - name: Run tests
         run: |
           ./build/hiredis-test.exe
+
+      - name: Run c++ test
+        run: |
+          ./build/hiredis-test-cpp.exe
 
       - name: Setup cygwin
         uses: egor-tensin/setup-cygwin@v3

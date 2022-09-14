@@ -19,7 +19,7 @@ getVersionBit(HIREDIS_SONAME)
 SET(VERSION "${HIREDIS_MAJOR}.${HIREDIS_MINOR}.${HIREDIS_PATCH}")
 MESSAGE("Detected version: ${VERSION}")
 
-PROJECT(hiredis LANGUAGES "C" VERSION "${VERSION}")
+PROJECT(hiredis VERSION "${VERSION}")
 INCLUDE(GNUInstallDirs)
 
 # Hiredis requires C99
@@ -253,6 +253,12 @@ IF(NOT DISABLE_TESTS)
     ENDIF()
     ADD_TEST(NAME hiredis-test
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test.sh)
+
+    ADD_EXECUTABLE(hiredis-test-cpp test.cc)
+    TARGET_LINK_LIBRARIES(hiredis-test-cpp hiredis)
+    ADD_TEST(NAME hiredis-test-cpp
+        COMMAND $<TARGET_FILE:hiredis-test-cpp>)
+
 ENDIF()
 
 # Add examples
