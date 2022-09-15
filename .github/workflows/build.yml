@@ -224,21 +224,22 @@ jobs:
       #   run: |
       #     ./build/hiredis-test.exe
 
-      # - name: Setup cygwin
-      #   uses: egor-tensin/setup-cygwin@v3
-      #   with:
-      #     platform: x64
-      #     packages: make git gcc-core
+      - name: Setup cygwin
+        uses: egor-tensin/setup-cygwin@v3
+        with:
+          platform: x64
+          packages: make git gcc-core
 
-      # - name: Build in cygwin
-      #   env:
-      #     HIREDIS_PATH: ${{ github.workspace }}
-      #   run: |
-      #     build_hiredis() {
-      #         git config --global --add safe.directory "$(cygpath -u $HIREDIS_PATH)"
-      #         cd $(cygpath -u $HIREDIS_PATH)
-      #         git clean -xfd
-      #         make
-      #     }
-      #     build_hiredis
-      #   shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+      - name: Build in cygwin
+        env:
+          HIREDIS_PATH: ${{ github.workspace }}
+          CC: clang-cl
+        run: |
+          build_hiredis() {
+              git config --global --add safe.directory "$(cygpath -u $HIREDIS_PATH)"
+              cd $(cygpath -u $HIREDIS_PATH)
+              git clean -xfd
+              make
+          }
+          build_hiredis
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
