@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 jobs:
   ubuntu:
+    if: ${{ false }}  # disable for now
     name: Ubuntu
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +43,7 @@ jobs:
       #        run: $GITHUB_WORKSPACE/test.sh
 
   centos7:
+    if: ${{ false }}  # disable for now
     name: CentOS 7
     runs-on: ubuntu-latest
     container: centos:7
@@ -82,6 +84,7 @@ jobs:
         run: $GITHUB_WORKSPACE/test.sh
 
   centos8:
+    if: ${{ false }}  # disable for now
     name: RockyLinux 8
     runs-on: ubuntu-latest
     container: rockylinux:8
@@ -123,6 +126,7 @@ jobs:
         run: $GITHUB_WORKSPACE/test.sh
 
   freebsd:
+    if: ${{ false }}  # disable for now
     runs-on: macos-12
     name:  FreeBSD
     steps:
@@ -141,6 +145,7 @@ jobs:
             gmake
 
   macos:
+    if: ${{ false }}  # disable for now
     name: macOS
     runs-on: macos-latest
     steps:
@@ -166,6 +171,12 @@ jobs:
   windows:
     name: Windows
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: ["", "clang-cl"]
+        # cmake-version: [3.19]
+        cmake-build-type: [Release, RelWithDebInfo, Debug]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -175,34 +186,59 @@ jobs:
 
       - name: Install dependencies
         run: |
-          choco install -y ninja memurai-developer
+          choco install -y ninja memurai-developer openssl
 
       - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: '3.24.1' # Current default
+          # cmake-version: '3.0.0'
+
+      - name: Show CMake version
+        continue-on-error: true
+        run: |
+          cmake --version
+
       - name: Build hiredis
+        env:
+          CC: ${{ matrix.compiler }}
+          CXX: ${{ matrix.compiler }}
         run: |
           mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_EXAMPLES=ON
+          cmake .. -G Ninja -DENABLE_SSL=ON -DCMAKE_BUILD_TYPE=${{ matrix.cmake-build-type }}
           ninja -v
 
-      - name: Run tests
+      - name: Show files
         run: |
-          ./build/hiredis-test.exe
+          dir ./build/
 
-      - name: Setup cygwin
-        uses: egor-tensin/setup-cygwin@v3
-        with:
-          platform: x64
-          packages: make git gcc-core
-
-      - name: Build in cygwin
-        env:
-          HIREDIS_PATH: ${{ github.workspace }}
+      - name: Install
         run: |
-          build_hiredis() {
-              git config --global --add safe.directory "$(cygpath -u $HIREDIS_PATH)"
-              cd $(cygpath -u $HIREDIS_PATH)
-              git clean -xfd
-              make
-          }
-          build_hiredis
-        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+          cd build
+          ninja -v install
+
+
+      # - name: Run tests
+      #   run: |
+      #     ./build/hiredis-test.exe
+
+      # - name: Setup cygwin
+      #   uses: egor-tensin/setup-cygwin@v3
+      #   with:
+      #     platform: x64
+      #     packages: make git gcc-core
+
+      # - name: Build in cygwin
+      #   env:
+      #     HIREDIS_PATH: ${{ github.workspace }}
+      #   run: |
+      #     build_hiredis() {
+      #         git config --global --add safe.directory "$(cygpath -u $HIREDIS_PATH)"
+      #         cd $(cygpath -u $HIREDIS_PATH)
+      #         git clean -xfd
+      #         make
+      #     }
+      #     build_hiredis
+      #   shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
