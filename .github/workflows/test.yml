@@ -1,82 +1,83 @@
 name: C/C++ CI
 
-on:
-  push:
-    branches: [ master, dev ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
+# on:
+#   push:
+#     branches: [ master, dev ]
+#   pull_request:
+#     branches: [ master ]
 
 jobs:
-  full-build:
-    name: Build all, plus default examples, run tests against redis
+  # full-build:
+  #   name: Build all, plus default examples, run tests against redis
 
-    runs-on: ubuntu-latest
-    env:
-      # the docker image used by the test.sh
-      REDIS_DOCKER: redis:alpine
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     # the docker image used by the test.sh
+  #     REDIS_DOCKER: redis:alpine
 
-    steps:
+  #   steps:
 
-    - name: install prerequisites
-      run: sudo apt-get update && sudo apt-get install -y libev-dev libevent-dev libglib2.0-dev libssl-dev valgrind
-    - uses: actions/checkout@v2
-    - name: run make
-      run: make all examples
-    - name: Run unittests
-      run: make check
-    - name: Run tests with valgrind
-      env:
-        TEST_PREFIX: valgrind --error-exitcode=100
-        SKIPS_ARG: --skip-throughput
-      run: make check
+  #   - name: install prerequisites
+  #     run: sudo apt-get update && sudo apt-get install -y libev-dev libevent-dev libglib2.0-dev libssl-dev valgrind
+  #   - uses: actions/checkout@v2
+  #   - name: run make
+  #     run: make all examples
+  #   - name: Run unittests
+  #     run: make check
+  #   - name: Run tests with valgrind
+  #     env:
+  #       TEST_PREFIX: valgrind --error-exitcode=100
+  #       SKIPS_ARG: --skip-throughput
+  #     run: make check
   
-  build-32-bit:
-    name: Build and test minimal 32 bit linux
-    runs-on: ubuntu-latest
-    steps:
-    - name: install prerequisites
-      run: sudo apt-get update && sudo apt-get install gcc-multilib
-    - uses: actions/checkout@v2
-    - name: run make
-      run: make all
-      env:
-        PLATFORM_FLAGS: -m32
-    - name: Run unittests
-      env:
-        REDIS_DOCKER: redis:alpine
-      run: make check
+  # build-32-bit:
+  #   name: Build and test minimal 32 bit linux
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: install prerequisites
+  #     run: sudo apt-get update && sudo apt-get install gcc-multilib
+  #   - uses: actions/checkout@v2
+  #   - name: run make
+  #     run: make all
+  #     env:
+  #       PLATFORM_FLAGS: -m32
+  #   - name: Run unittests
+  #     env:
+  #       REDIS_DOCKER: redis:alpine
+  #     run: make check
 
-  build-arm:
-    name: Cross-compile and test arm linux with Qemu
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: arm
-            toolset: arm-linux-gnueabi
-            emulator: qemu-arm
-          - name: aarch64
-            toolset: aarch64-linux-gnu
-            emulator: qemu-aarch64
+  # build-arm:
+  #   name: Cross-compile and test arm linux with Qemu
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - name: arm
+  #           toolset: arm-linux-gnueabi
+  #           emulator: qemu-arm
+  #         - name: aarch64
+  #           toolset: aarch64-linux-gnu
+  #           emulator: qemu-aarch64
 
-    steps:
-    - name: install qemu
-      if: matrix.emulator
-      run: sudo apt-get install  -y qemu-user 
-    - name: install ploatform toolset
-      if: matrix.toolset
-      run: sudo apt-get install -y gcc-${{matrix.toolset}}
-    - uses: actions/checkout@v2
-    - name: run make
-      run: make all
-      env:
-        CC: ${{matrix.toolset}}-gcc
-        AR: ${{matrix.toolset}}-ar
-    - name: Run unittests
-      env:
-        REDIS_DOCKER: redis:alpine
-        TEST_PREFIX: ${{matrix.emulator}} -L /usr/${{matrix.toolset}}/
-      run: make check
+  #   steps:
+  #   - name: install qemu
+  #     if: matrix.emulator
+  #     run: sudo apt-get install  -y qemu-user 
+  #   - name: install ploatform toolset
+  #     if: matrix.toolset
+  #     run: sudo apt-get install -y gcc-${{matrix.toolset}}
+  #   - uses: actions/checkout@v2
+  #   - name: run make
+  #     run: make all
+  #     env:
+  #       CC: ${{matrix.toolset}}-gcc
+  #       AR: ${{matrix.toolset}}-ar
+  #   - name: Run unittests
+  #     env:
+  #       REDIS_DOCKER: redis:alpine
+  #       TEST_PREFIX: ${{matrix.emulator}} -L /usr/${{matrix.toolset}}/
+  #     run: make check
 
   build-windows:
     name: Build and test on windows 64 bit Intel
@@ -84,8 +85,15 @@ jobs:
     steps:
       - uses: microsoft/setup-msbuild@v1.0.2
       - uses: actions/checkout@v2
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: '3.8'
+          # 3.5, 3.6, 3.7 not working, 3.9, 3.10 works
       - name: Cmake
-        run: cmake -Wno-dev CmakeLists.txt
+        run: |
+          cmake -version
+          cmake -Wno-dev CmakeLists.txt
       - name: build redis
         run: MSBuild hiredis.vcxproj /p:Configuration=Debug
       - name: build redis_static

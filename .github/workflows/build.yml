@@ -1,5 +1,10 @@
 name: Build and test
-on: [push, pull_request]
+# on: [push, pull_request]
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   ubuntu:
@@ -66,20 +71,15 @@ jobs:
           yum -y --enablerepo=remi install redis
           yum -y install gcc gcc-c++ make openssl openssl-devel cmake3 valgrind libevent-devel
 
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
-        with:
-          cmake-version: '3.0.0'
-
       - name: Build using cmake
         env: 
           EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON
           CFLAGS: -Werror
           CXXFLAGS: -Werror
         run: |
-          cmake --version
-          mkdir build-centos7 && cd build-centos7 && cmake .. && cd ..
-          cmake --build build-centos7
+          cmake3 --version
+          mkdir build-centos7 && cd build-centos7 && cmake3 .. && cd ..
+          cmake3 --build build-centos7
 
       - name: Build using Makefile
         run: USE_SSL=1 TEST_ASYNC=1 make
@@ -114,11 +114,6 @@ jobs:
           dnf -y module install redis:remi-6.0
           dnf -y group install "Development Tools"
           dnf -y install openssl-devel cmake valgrind libevent-devel
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
-        with:
-          cmake-version: '3.0.0'
 
       - name: Build using cmake
         env: 
@@ -229,7 +224,8 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.0.0'
+          cmake-version: '3.24.1'
+          # cmake-version: '3.0.0'
 
       - name: Build hiredis
         run: |
