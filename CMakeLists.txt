@@ -19,7 +19,7 @@ getVersionBit(HIREDIS_SONAME)
 SET(VERSION "${HIREDIS_MAJOR}.${HIREDIS_MINOR}.${HIREDIS_PATCH}")
 MESSAGE("Detected version: ${VERSION}")
 
-PROJECT(hiredis LANGUAGES "C" VERSION "${VERSION}")
+PROJECT(hiredis VERSION "${VERSION}")
 INCLUDE(GNUInstallDirs)
 
 # Hiredis requires C99

@@ -4,6 +4,7 @@ on: [push, pull_request]
 jobs:
   ubuntu:
     name: Ubuntu
+    if: ${{ false }}  # disable
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,6 +44,7 @@ jobs:
 
   centos7:
     name: CentOS 7
+    if: ${{ false }}  # disable
     runs-on: ubuntu-latest
     container: centos:7
     steps:
@@ -83,6 +85,7 @@ jobs:
 
   centos8:
     name: RockyLinux 8
+    if: ${{ false }}  # disable
     runs-on: ubuntu-latest
     container: rockylinux:8
     steps:
@@ -125,6 +128,7 @@ jobs:
   freebsd:
     runs-on: macos-12
     name:  FreeBSD
+    if: ${{ false }}  # disable
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -142,6 +146,7 @@ jobs:
 
   macos:
     name: macOS
+    if: ${{ false }}  # disable
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -165,6 +170,7 @@ jobs:
 
   windows:
     name: Windows
+    if: ${{ false }}  # disable
     runs-on: windows-latest
     steps:
       - name: Checkout code
