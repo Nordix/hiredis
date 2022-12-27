@@ -214,8 +214,12 @@ IF(ENABLE_SSL)
     ENDIF()
 
     IF (WIN32 OR MINGW)
-        TARGET_LINK_LIBRARIES(hiredis_ssl PRIVATE hiredis)
-        TARGET_LINK_LIBRARIES(hiredis_ssl_static PUBLIC hiredis_static)
+        # TARGET_LINK_LIBRARIES(hiredis_ssl PRIVATE hiredis)
+        #TARGET_LINK_LIBRARIES(hiredis_ssl_static PUBLIC hiredis_static)
+        IF(BUILD_SHARED_LIBS)
+          TARGET_LINK_LIBRARIES(hiredis_ssl PRIVATE ${OPENSSL_LIBRARIES})
+        ENDIF()
+        TARGET_LINK_LIBRARIES(hiredis_ssl_static PRIVATE ${OPENSSL_LIBRARIES})
     ENDIF()
     CONFIGURE_FILE(hiredis_ssl.pc.in hiredis_ssl.pc @ONLY)
 
@@ -225,7 +229,7 @@ IF(ENABLE_SSL)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-    if (MSVC)
+    if (MSVC AND BUILD_SHARED_LIBS)
         INSTALL(FILES $<TARGET_PDB_FILE:hiredis_ssl>
             DESTINATION ${CMAKE_INSTALL_BINDIR}
             CONFIGURATIONS Debug RelWithDebInfo)
