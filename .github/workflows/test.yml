@@ -1,10 +1,11 @@
 name: C/C++ CI
+on: [push, pull_request]
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+# on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
 
 jobs:
   full-build:
@@ -83,9 +84,9 @@ jobs:
       - uses: microsoft/setup-msbuild@v1.0.2
       - uses: actions/checkout@v3
       - name: Run CMake
-        run: cmake -Wno-dev CmakeLists.txt
-      - name: Build hiredis
-        run: MSBuild hiredis.vcxproj /p:Configuration=Debug
+        run: cmake -Wno-dev -DBUILD_SHARED_LIBS=OFF CmakeLists.txt
+      # - name: Build hiredis
+      #   run: MSBuild hiredis.vcxproj /p:Configuration=Debug
       - name: Build hiredis_static
         run: MSBuild hiredis_static.vcxproj /p:Configuration=Debug
       - name: Build hiredis-test
