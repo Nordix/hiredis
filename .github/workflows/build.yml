@@ -17,7 +17,7 @@ jobs:
 
       - name: Build using cmake
         env:
-          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON
+          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON -DBUILD_SHARED_LIBS=OFF
           CFLAGS: -Werror
           CXXFLAGS: -Werror
         run: mkdir build && cd build && cmake .. && make
@@ -52,7 +52,7 @@ jobs:
 
       - name: Build using cmake
         env:
-          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON
+          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON -DBUILD_SHARED_LIBS=OFF
           CFLAGS: -Werror
           CXXFLAGS: -Werror
         run: mkdir build && cd build && cmake3 .. && make
@@ -90,7 +90,7 @@ jobs:
 
       - name: Build using cmake
         env:
-          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON
+          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON -DBUILD_SHARED_LIBS=OFF
           CFLAGS: -Werror
           CXXFLAGS: -Werror
         run: mkdir build && cd build && cmake .. && make
@@ -122,7 +122,7 @@ jobs:
         with:
           prepare: pkg install -y gmake cmake
           run: |
-            mkdir build && cd build && cmake .. && make && cd ..
+            mkdir build && cd build && cmake -DBUILD_SHARED_LIBS=OFF .. && make && cd ..
             gmake
 
   macos:
@@ -152,13 +152,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          choco install -y ninja memurai-developer
+          choco install -y ninja memurai-developer openssl
 
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Build hiredis
         run: |
           mkdir build && cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_EXAMPLES=ON
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_EXAMPLES=ON -DENABLE_SSL=ON -DBUILD_SHARED_LIBS=OFF
           ninja -v
 
       - name: Run tests
