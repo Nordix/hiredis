@@ -23,6 +23,8 @@ jobs:
         run: mkdir build && cd build && cmake .. && make
 
       - name: Build using makefile
+        env:
+          CFLAGS: -Werror
         run: USE_SSL=1 TEST_ASYNC=1 make
 
       - name: Run tests
@@ -58,6 +60,8 @@ jobs:
         run: mkdir build && cd build && cmake3 .. && make
 
       - name: Build using Makefile
+        env:
+          CFLAGS: -Werror
         run: USE_SSL=1 TEST_ASYNC=1 make
 
       - name: Run tests
@@ -96,6 +100,8 @@ jobs:
         run: mkdir build && cd build && cmake .. && make
 
       - name: Build using Makefile
+        env:
+          CFLAGS: -Werror
         run: USE_SSL=1 TEST_ASYNC=1 make
 
       - name: Run tests
