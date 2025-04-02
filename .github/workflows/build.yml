@@ -14,13 +14,18 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
           sudo apt-get update
           sudo apt-get install -y redis-server valgrind libevent-dev
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@802fa1a2c4e212495c05bf94dba2704a92a472be # v2.0.2
+        with:
+          cmake-version: '3.7.0'
+          use-32bit: true
 
       - name: Build using cmake
         env:
-          EXTRA_CMAKE_OPTS: -DENABLE_EXAMPLES:BOOL=ON -DENABLE_SSL:BOOL=ON -DENABLE_SSL_TESTS:BOOL=ON -DENABLE_ASYNC_TESTS:BOOL=ON
+          EXTRA_CMAKE_OPTS:
           CFLAGS: -Werror
           CXXFLAGS: -Werror
-        run: mkdir build && cd build && cmake .. && make
+        run: mkdir build && cd build && cmake -DENABLE_EXAMPLES=ON -DENABLE_SSL=ON -DENABLE_SSL_TESTS=ON -DENABLE_ASYNC_TESTS=ON .. && make
 
       - name: Build using makefile
         run: USE_SSL=1 TEST_ASYNC=1 make
@@ -117,6 +122,10 @@ jobs:
       - name: Install dependencies
         run: |
           choco install -y ninja memurai-developer
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@802fa1a2c4e212495c05bf94dba2704a92a472be # v2.0.2
+        with:
+          cmake-version: '3.5.0'
 
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Build hiredis
